@@ -125,12 +125,12 @@ search_directory :: proc( name: string )
     for fi in fis 
     {
       total_files += 1
-      log.debug( fi.name )
-      log.debug( fi.fullpath )
+      // log.debug( fi.name )
+      // log.debug( fi.fullpath )
       if fi.is_dir
       {
         search_directory( fi.fullpath )
-      total_files -= 1
+        total_files -= 1
       }
       else if str.contains( fi.name, ".odin" )
       {
