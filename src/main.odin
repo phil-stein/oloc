@@ -100,7 +100,7 @@ print_result :: proc ()
   fmt.println(  " ----------------------" )
 }
 
-search_directory :: proc( name: string )
+search_directory :: proc( name: string, alloc:=context.allocator )
 {
       f, err := os.open( name )
     defer os.close(f)
@@ -113,9 +113,9 @@ search_directory :: proc( name: string )
     }
 
     fis: []os.File_Info
-    defer os.file_info_slice_delete(fis) // fis is a slice, we need to remember to free it
+    defer os.file_info_slice_delete( fis, alloc ) // fis is a slice, we need to remember to free it
 
-    fis, err = os.read_dir(f, -1) // -1 reads all file infos
+    fis, err = os.read_dir( f, -1, alloc ) // -1 reads all file infos
     if err != os.ERROR_NONE 
     {
         fmt.eprintln( "[ERROR] could not read directory: ", name )
@@ -127,7 +127,9 @@ search_directory :: proc( name: string )
       total_files += 1
       // log.debug( fi.name )
       // log.debug( fi.fullpath )
-      if fi.is_dir
+
+      // if fi.is_dir
+      if fi.type == .Directory
       {
         search_directory( fi.fullpath )
         total_files -= 1
@@ -148,8 +150,8 @@ search_directory :: proc( name: string )
 
 count_lines_in_file :: proc(path: string) -> ( total_lines, code_lines, comment_lines, empty_lines: int, ok: bool)
 {
-  src_bytes, _ok := os.read_entire_file( path, context.allocator )
-  ok = _ok
+  src_bytes, err := os.read_entire_file( path, context.allocator )
+  ok = err == nil 
   if !ok || len( src_bytes ) <= 0
   { fmt.eprintln( "[ERROR] could not read file: ", path ); return }
   defer delete( src_bytes, context.allocator )
